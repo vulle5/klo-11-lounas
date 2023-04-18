@@ -1,3 +1,8 @@
+import { NextResponse } from "next/server"
+
 export async function GET(request: Request) {
-  return new Response('Hello, Next.js!')
+  const res = await fetch('https://www.compass-group.fi/menuapi/feed/json?costNumber=3114&language=fi')
+  const data = await res.json()
+
+  return NextResponse.json(data)
 }
