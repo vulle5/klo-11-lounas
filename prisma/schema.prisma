@@ -16,6 +16,7 @@ model Location {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   dataMap   DataMap?
+  menus     Menu[]
 }
 
 model DataMap {
@@ -30,12 +31,35 @@ model DataMap {
 }
 
 model DataPath {
+  id         Int       @id @default(autoincrement())
+  path       String
+  column     String
+  table      String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  dataMap    DataMap   @relation(fields: [dataMapId], references: [id])
+  dataMapId  Int
+  dataPath   DataPath? @relation("DataPathToDataPath", fields: [dataPathId], references: [id])
+  dataPathId Int?      @unique
+  node       DataPath? @relation("DataPathToDataPath")
+}
+
+model Menu {
+  id         Int        @id @default(autoincrement())
+  date       DateTime
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  location   Location   @relation(fields: [locationId], references: [id])
+  locationId Int
+  items      MenuItem[]
+}
+
+model MenuItem {
   id        Int      @id @default(autoincrement())
-  path      String
-  column    String
-  table     String
+  name      String
+  price     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  dataMap   DataMap  @relation(fields: [dataMapId], references: [id])
-  dataMapId Int
+  menu      Menu     @relation(fields: [menuId], references: [id])
+  menuId    Int
 }
