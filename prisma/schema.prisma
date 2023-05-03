@@ -6,8 +6,10 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
 }
 
 model Location {
@@ -31,22 +33,19 @@ model DataMap {
 }
 
 model DataPath {
-  id         Int       @id @default(autoincrement())
-  path       String
-  column     String
-  table      String
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  dataMap    DataMap   @relation(fields: [dataMapId], references: [id])
-  dataMapId  Int
-  dataPath   DataPath? @relation("DataPathToDataPath", fields: [dataPathId], references: [id])
-  dataPathId Int?      @unique
-  node       DataPath? @relation("DataPathToDataPath")
+  id        Int      @id @default(autoincrement())
+  path      String
+  column    String
+  table     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  dataMap   DataMap  @relation(fields: [dataMapId], references: [id])
+  dataMapId Int
 }
 
 model Menu {
   id         Int        @id @default(autoincrement())
-  date       DateTime
+  date       DateTime   @db.Date
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   location   Location   @relation(fields: [locationId], references: [id])
@@ -57,7 +56,7 @@ model Menu {
 model MenuItem {
   id        Int      @id @default(autoincrement())
   name      String
-  price     Float
+  price     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   menu      Menu     @relation(fields: [menuId], references: [id])
