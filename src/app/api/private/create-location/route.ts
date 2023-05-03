@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
-import { createLocation } from "@/utils/server/scripts"
+import { createMenuItemsForMenu } from "@/utils/server/scripts"
+import { prisma } from "@/utils/server/prisma"
 
 export async function GET(request: Request) {
-  const location = await createLocation()
+  await createMenuItemsForMenu(8)
 
-  return NextResponse.json({ location })
+  return NextResponse.json({ result: "success" })
 }
