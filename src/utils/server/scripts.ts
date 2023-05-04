@@ -15,25 +15,25 @@ export async function createLocation() {
   });
 }
 
-export async function createMenuForLocation(locationId: number) {
+export async function findOrCreateMenuForLocation(locationId: number) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   // Create a new menu for today if it doesn't exist
-  const menu = await prisma.menu.findFirst({
+  let menu = await prisma.menu.findFirst({
     where: {
       date: today,
       locationId
     }
   })
-  if (!menu) {
-    await prisma.menu.create({
-      data: {
-        date: today,
-        locationId
-      }
-    });
-  }
+  menu ??= await prisma.menu.create({
+    data: {
+      date: today,
+      locationId
+    }
+  });
+
+  return menu;
 }
 
 export async function createMenuItemsForMenu(menuId: number) {
@@ -84,12 +84,11 @@ export async function createMenuItemsForMenu(menuId: number) {
     throw new Error('Menu items not found from data');
   }
   menuItems.forEach(async (menuItem: any) => {
-    // FIXME: Prisma sqlite is garbage... switch to proper database that supports createMany
     // FIXME: Proper array and string handling and price parsing
     await prisma.menuItem.create({
       data: {
         name: Array.isArray(menuItem[menuItemNamePath.path]) ? menuItem[menuItemNamePath.path].join(', ') : menuItem[menuItemNamePath.path],
-        price: Number.isNaN(parseFloat(menuItem[menuItemPricePath.path])) ? 0 : parseFloat(menuItem[menuItemPricePath.path]),
+        price: menuItem[menuItemPricePath.path],
         menu: {
           connect: {
             id: menu.id

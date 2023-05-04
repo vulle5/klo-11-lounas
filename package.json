@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run prisma:generate && next build",
+    "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:migrate": "dotenv -e .env.development.local -- npx prisma migrate dev",
-    "prisma:generate": "prisma generate",
+    "prisma:studio": "dotenv -e .env.development.local -- npx prisma studio",
+    "prisma:generate": "dotenv -e .env.development.local -- prisma generate",
     "prisma:migrate:prod": "prisma migrate deploy"
   },
   "dependencies": {
