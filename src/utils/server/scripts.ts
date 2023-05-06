@@ -40,7 +40,7 @@ export async function findOrCreateMenuForLocation(locationId: number) {
 
 export async function createMenuItemsForMenu(menuId: number) {
   // Find menu and dataMap
-  const menu = await prisma.menu.findUnique({
+  const menu = await prisma.menu.findFirst({
     where: {
       id: menuId,
     },
@@ -48,16 +48,17 @@ export async function createMenuItemsForMenu(menuId: number) {
   if (!menu) {
     throw new Error(`Menu with id ${menuId} not found`);
   }
-  const dataMap = await prisma.dataMap.findUnique({
+  const dataMap = await prisma.dataMap.findFirst({
     where: {
       locationId: menu.locationId,
+      dataType: "json"
     },
     include: {
       paths: true,
     },
   });
   if (!dataMap) {
-    throw new Error(`DataMap for location ${menu.locationId} not found`);
+    throw new Error(`json DataMap for location ${menu.locationId} not found`);
   }
 
   // Fetch data for location using dataMap url
