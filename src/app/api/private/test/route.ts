@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server"
-import { createMenuItemsForMenu } from "@/utils/server/scripts"
+import { createMenuItemsForMenu, createLocation, findOrCreateMenuForLocation } from "@/utils/server/scripts"
 
 // FIXME: For testing purposes, remove this
 export const dynamic = "force-dynamic"
 
 export async function GET(request: Request) {
-  const menu = await createMenuItemsForMenu(3);
+  await createMenuItemsForMenu(1);
+  // await createLocation()
+  // await findOrCreateMenuForLocation(1)
 
-  return NextResponse.json({ result: menu })
+  return NextResponse.json({ result: true })
 }

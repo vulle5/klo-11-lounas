@@ -55,8 +55,8 @@ model Menu {
 
 model MenuItem {
   id        Int      @id @default(autoincrement())
-  name      String
-  price     String
+  name      String?
+  price     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   menu      Menu     @relation(fields: [menuId], references: [id])

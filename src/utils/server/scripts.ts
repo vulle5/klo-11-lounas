@@ -152,7 +152,9 @@ async function createMenuItem(
       })),
     });
   } else {
-    if (!menuItemOrItems?.name) return;
+    if (!menuItemOrItems?.name) {
+      throw new Error("Menu item name not found from data");
+    }
 
     await prisma.menuItem.create({
       data: {
