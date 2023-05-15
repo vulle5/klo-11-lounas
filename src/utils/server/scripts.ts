@@ -1,4 +1,3 @@
-import { MenuItem } from "@prisma/client";
 import { prisma } from "./prisma";
 import { get } from "lodash";
 
@@ -106,7 +105,7 @@ export async function createMenuItemsForMenu(menuId: number) {
   }
   const menuInData = menusInData.find((dataMenu) =>
     parseDateFromDateTime(
-      new Date(dataMenu[menuDatePath?.path ?? ""])
+      new Date(get(dataMenu, menuDatePath?.path ?? ""))
     ).includes(parseDateFromDateTime(menu.date))
   );
   if (!menuInData) {
@@ -144,10 +143,10 @@ async function createMenuItem(
   if (Array.isArray(menuItemOrItems)) {
     await prisma.menuItem.createMany({
       data: menuItemOrItems.map((menuItem: any) => ({
-        name: Array.isArray(menuItem[menuItemNamePath.path])
-          ? menuItem[menuItemNamePath.path].join(", ")
-          : menuItem[menuItemNamePath.path],
-        price: menuItem[menuItemPricePath.path],
+        name: Array.isArray(get(menuItem, menuItemNamePath.path))
+          ? get(menuItem, menuItemNamePath.path).join(", ")
+          : get(menuItem, menuItemNamePath.path),
+        price: get(menuItem, menuItemPricePath.path),
         menuId: menu.id,
       })),
     });
@@ -158,10 +157,10 @@ async function createMenuItem(
 
     await prisma.menuItem.create({
       data: {
-        name: Array.isArray(menuItemOrItems[menuItemNamePath.path])
-          ? menuItemOrItems[menuItemNamePath.path].join(", ")
-          : menuItemOrItems[menuItemNamePath.path],
-        price: menuItemOrItems[menuItemPricePath.path],
+        name: Array.isArray(get(menuItemOrItems, menuItemNamePath.path))
+          ? get(menuItemOrItems, menuItemNamePath.path).join(", ")
+          : get(menuItemOrItems, menuItemNamePath.path),
+        price: get(menuItemOrItems, menuItemPricePath.path),
         menu: {
           connect: {
             id: menu.id,
