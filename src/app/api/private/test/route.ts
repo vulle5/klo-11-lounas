@@ -5,7 +5,7 @@ import { createMenuItemsForMenu, createLocation, findOrCreateMenuForLocation } f
 export const dynamic = "force-dynamic"
 
 export async function GET(request: Request) {
-  await createMenuItemsForMenu(2);
+  // await createMenuItemsForMenu(2);
   // await createLocation()
   // await findOrCreateMenuForLocation(1)
 
