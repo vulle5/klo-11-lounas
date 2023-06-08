@@ -1,10 +1,10 @@
-import Image from 'next/image'
-import { Inter } from 'next/font/google'
+import MenuList from "./components/menuList";
 
-const inter = Inter({ subsets: ['latin'] })
-
-export default function Home() {
+export default async function Home() {
   return (
-    <h1>Hello, Home page!</h1>
+    <>
+      <h1>Hello, Home page!</h1>
+      <MenuList />
+    </>
   )
 }
