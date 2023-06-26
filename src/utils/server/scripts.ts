@@ -4,7 +4,13 @@ import { get } from "lodash";
 
 type DataMapWithPaths = DataMap & { paths: DataPath[] };
 
-export async function createLocation({ name, dataUrl }: { name: string; dataUrl: string }) {
+export async function createLocation({
+  name,
+  dataUrl,
+}: {
+  name: string;
+  dataUrl: string;
+}) {
   return await prisma.location.create({
     data: {
       name,
@@ -51,7 +57,7 @@ export async function createMenuItemsForMenu(menuId: number) {
   const dataMap = await prisma.dataMap.findFirst({
     where: {
       locationId: menu.locationId,
-      dataType: "json"
+      dataType: "json",
     },
     include: {
       paths: true,
@@ -80,13 +86,13 @@ export async function createMenuItemsForMenu(menuId: number) {
 
   // Find menu item name, price paths and menu date from dataMap
   const menuItemNamePath = findDataPath(dataMap, "MenuItem", "name");
-  const menuItemPricePath = findDataPath(dataMap,"MenuItem", "price");
+  const menuItemPricePath = findDataPath(dataMap, "MenuItem", "price");
   const menuDatePath = findDataPath(dataMap, "Menu", "date");
 
   const menuInData = menusInData.find((dataMenu) =>
-    parseDateFromDateTime(
-      new Date(get(dataMenu, menuDatePath.path))
-    ).includes(parseDateFromDateTime(menu.date))
+    parseDateFromDateTime(new Date(get(dataMenu, menuDatePath.path))).includes(
+      parseDateFromDateTime(menu.date)
+    )
   );
   if (!menuInData) {
     throw new Error(`Menu for date ${menu.date} not found from data`);
@@ -116,10 +122,18 @@ export async function createMenuItemsForMenu(menuId: number) {
   }
 }
 
-function findDataPath(dataMap: DataMapWithPaths, table: string, column: string): DataPath {
-  const path = dataMap.paths.find((path) => path.table === table && path.column === column);
+function findDataPath(
+  dataMap: DataMapWithPaths,
+  table: string,
+  column: string
+): DataPath {
+  const path = dataMap.paths.find(
+    (path) => path.table === table && path.column === column
+  );
   if (!path) {
-    throw new Error(`DataPath not found for table: ${table}, column: ${column}`);
+    throw new Error(
+      `DataPath not found for table: ${table}, column: ${column}`
+    );
   }
   return path;
 }
@@ -131,18 +145,22 @@ async function createMenuItem(
   menu: Menu
 ) {
   // Transform menu item or items to array
-  const menuItems = Array.isArray(menuItemOrItems) ? menuItemOrItems : [menuItemOrItems];
+  const menuItems = Array.isArray(menuItemOrItems)
+    ? menuItemOrItems
+    : [menuItemOrItems];
 
-  // Create menu item objects for prisma 
-  const data = menuItems.map((menuItem) => {
-    const name = Array.isArray(get(menuItem, menuItemNamePath.path))
-      ? get(menuItem, menuItemNamePath.path).join(", ")
-      : get(menuItem, menuItemNamePath.path);
+  // Create menu item objects for prisma
+  const data = menuItems
+    .map((menuItem) => {
+      const name = Array.isArray(get(menuItem, menuItemNamePath.path))
+        ? get(menuItem, menuItemNamePath.path).join(", ")
+        : get(menuItem, menuItemNamePath.path);
 
-    const price = get(menuItem, menuItemPricePath.path);
+      const price = get(menuItem, menuItemPricePath.path);
 
-    return { name, price, menuId: menu.id };
-  }).filter((menuItem) => menuItem.name);
+      return { name, price, menuId: menu.id };
+    })
+    .filter((menuItem) => menuItem.name);
 
   if (data.length > 1) {
     await prisma.menuItem.createMany({ data });

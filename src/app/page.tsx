@@ -2,9 +2,9 @@ import MenuList from "./components/MenuList";
 
 export default async function Home() {
   return (
-    <main className="md:p-4 p-2">
-      <h1 className="text-2xl mb-4">Klo 11 Lounas</h1>
+    <main className="p-2 md:p-4">
+      <h1 className="mb-4 text-2xl">Klo 11 Lounas</h1>
       <MenuList />
     </main>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import 'server-only';
+import "server-only";
 import { prisma } from "@/utils/server/prisma";
 
 export const getMenus = async ({ date }: { date: Date }) => {
@@ -8,7 +8,7 @@ export const getMenus = async ({ date }: { date: Date }) => {
     },
     include: {
       items: true,
-      location: true
-    }
+      location: true,
+    },
   });
 };
