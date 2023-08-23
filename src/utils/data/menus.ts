@@ -10,5 +10,10 @@ export const getMenus = async ({ date }: { date: Date }) => {
       items: true,
       location: true,
     },
+    orderBy: {
+      location: {
+        name: "asc",
+      },
+    }
   });
 };

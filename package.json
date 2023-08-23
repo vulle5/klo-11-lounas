@@ -13,7 +13,6 @@
     "prisma:migrate:prod": "prisma migrate deploy"
   },
   "dependencies": {
-    "@js-temporal/polyfill": "^0.4.3",
     "@prisma/client": "^4.13.0",
     "@types/node": "18.15.11",
     "@types/react": "18.2.9",

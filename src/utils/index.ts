@@ -26,3 +26,10 @@ export function squeeze(str: string, charSet?: string): string {
   }
   return result;
 }
+
+export const dateFormatter = new Intl.DateTimeFormat("fi-FI", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
