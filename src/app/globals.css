@@ -14,6 +14,11 @@
   }
 }
 
+html {
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
 body {
   color: rgb(var(--foreground-rgb));
   background: rgb(var(--background-rgb));
