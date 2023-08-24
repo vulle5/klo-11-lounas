@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/utils/server/prisma";
+import prisma from "@/utils/server/prisma";
 
 export const getMenus = async ({ date }: { date: Date }) => {
   return await prisma.menu.findMany({
@@ -14,6 +14,6 @@ export const getMenus = async ({ date }: { date: Date }) => {
       location: {
         name: "asc",
       },
-    }
+    },
   });
 };

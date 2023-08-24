@@ -1,10 +1,11 @@
 import { DataMap, DataPath, Menu } from "@prisma/client";
 import { JSDOM } from "jsdom";
-import { prisma } from "./prisma";
+import prisma from "./prisma";
 import { get } from "lodash";
 import { squeeze } from "@/utils";
 
 type DataMapWithPaths = DataMap & { paths: DataPath[] };
+type ResolvedPromiseType<Type> = Type extends Promise<infer X> ? X : never;
 
 export async function createLocation({
   name,
@@ -28,6 +29,24 @@ export async function createLocation({
 
 export async function findOrCreateMenuForLocation(locationId: number) {
   const today = new Date();
+  const inclusions = {
+    include: {
+      location: {
+        include: {
+          dataMap: {
+            include: {
+              paths: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          items: true,
+        },
+      },
+    },
+  };
 
   // Create a new menu for today if it doesn't exist
   let menu = await prisma.menu.findFirst({
@@ -35,36 +54,49 @@ export async function findOrCreateMenuForLocation(locationId: number) {
       date: today,
       locationId,
     },
+    ...inclusions,
   });
   menu ??= await prisma.menu.create({
     data: {
       date: today,
       locationId,
     },
+    ...inclusions,
   });
 
   return menu;
 }
 
-export async function createMenuItemsForMenu(menuId: number) {
-  // Find menu and dataMap
-  const menu = await prisma.menu.findFirst({
-    where: {
-      id: menuId,
-    },
-  });
-  if (!menu) {
-    throw new Error(`Menu with id ${menuId} not found`);
+type MenuWithDataMap = ResolvedPromiseType<
+  ReturnType<typeof findOrCreateMenuForLocation>
+>;
+
+export async function createMenuItemsForMenu(menu: MenuWithDataMap) {
+  if (!menu.location.dataMap) {
+    throw new Error(`DataMap for location ${menu.locationId} not found`);
   }
-  const dataMap = await prisma.dataMap.findFirst({
-    where: {
-      locationId: menu.locationId,
-      dataType: "json",
-    },
-    include: {
-      paths: true,
-    },
-  });
+  if (menu._count.items) {
+    console.log(
+      `Menu items already exist for menu ${menu.id} for location ${menu.locationId}`
+    );
+    return;
+  }
+
+  if (menu.location.dataMap.dataType === "json") {
+    await createMenuItemsForMenuFromJson(menu);
+  } else if (menu.location.dataMap.dataType === "html") {
+    await createMenuItemsForMenuFromHtml(menu);
+  } else {
+    throw new Error(
+      `DataMap dataType ${menu.location.dataMap.dataType} not supported`
+    );
+  }
+}
+
+async function createMenuItemsForMenuFromJson({
+  location: { dataMap },
+  ...menu
+}: MenuWithDataMap) {
   if (!dataMap) {
     throw new Error(`json DataMap for location ${menu.locationId} not found`);
   }
@@ -174,30 +206,17 @@ async function createMenuItem(
 }
 
 // Support for lounaat.info parsing only
-export async function createMenuItemsForMenuFromHtml(menuId: number) {
-  // Find menu and dataMap
-  const menu = await prisma.menu.findFirst({
-    where: {
-      id: menuId,
-    },
-  });
-  if (!menu) {
-    throw new Error(`Menu with id ${menuId} not found`);
-  }
-  const dataMap = await prisma.dataMap.findFirst({
-    where: {
-      locationId: menu.locationId,
-      dataType: "html",
-    },
-    include: {
-      paths: true,
-    },
-  });
+async function createMenuItemsForMenuFromHtml({
+  location: { dataMap },
+  ...menu
+}: MenuWithDataMap) {
   if (!dataMap) {
     throw new Error(`json DataMap for location ${menu.locationId} not found`);
   }
   if (new URL(dataMap.dataUrl).origin !== "https://www.lounaat.info") {
-    throw new Error(`DataMap url ${dataMap.dataUrl} is not from lounaat.info. Currently only www.lounaat.info is supported.`);
+    throw new Error(
+      `DataMap url ${dataMap.dataUrl} is not from lounaat.info. Currently only www.lounaat.info is supported.`
+    );
   }
 
   // Fetch data for location using dataMap url
