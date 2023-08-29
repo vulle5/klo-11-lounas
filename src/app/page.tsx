@@ -6,7 +6,7 @@ export default async function Home() {
 
   return (
     <main className="p-2 md:p-4">
-      <h1 className="mb-4 text-2xl">Klo 11 Lounas</h1>
+      <h1 className="mb-4 text-3xl">Klo 11 Lounas</h1>
       <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
         {dateFormatter.format(today)}
       </p>

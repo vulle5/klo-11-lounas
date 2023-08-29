@@ -10,7 +10,7 @@ export default function Menu({ menu }: { menu: MenuWithItemsAndLocation }) {
       className="rounded bg-slate-100 p-4 shadow-md dark:bg-slate-800"
       key={menu.id}
     >
-      <h2 className="mb-4 text-xl font-bold">{menu.location.name}</h2>
+      <h2 className="mb-5 text-2xl font-bold">{menu.location.name}</h2>
       <ul className="flex flex-col">
         {menu.items.map((item, index) => (
           <li key={item.id}>
