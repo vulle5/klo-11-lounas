@@ -144,7 +144,7 @@ async function createMenuItemsForMenuFromJson({
       throw new Error("Menu items not found from data");
     }
     // Create menu items for each item in the array
-    await createMenuItem(
+    await createMenuItemsForJson(
       menuItemOrItems,
       menuItemNamePath,
       menuItemPricePath,
@@ -152,7 +152,12 @@ async function createMenuItemsForMenuFromJson({
     );
   } else {
     // If the path doesn't exist, the menu items are a single object
-    await createMenuItem(menuInData, menuItemNamePath, menuItemPricePath, menu);
+    await createMenuItemsForJson(
+      menuInData,
+      menuItemNamePath,
+      menuItemPricePath,
+      menu
+    );
   }
 }
 
@@ -172,7 +177,7 @@ function findDataPath(
   return path;
 }
 
-async function createMenuItem(
+async function createMenuItemsForJson(
   menuItemOrItems: any[],
   menuItemNamePath: DataPath,
   menuItemPricePath: DataPath,

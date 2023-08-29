@@ -23,13 +23,14 @@ export async function GET(request: NextRequest) {
       const menu = await findOrCreateMenuForLocation(id);
 
       await createMenuItemsForMenu(menu);
+      console.log(`Synced location ${id}`);
     } catch (error) {
-      console.error(error);
+      console.error(`Syncing location ${id} failed`, error);
     }
   });
 
   // Revalidate all pages
   revalidatePath("/");
 
-  return new NextResponse("Synced", { status: 200 });
+  return NextResponse.json({ revalidated: true, date: new Date() });
 }
