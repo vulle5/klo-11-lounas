@@ -1,3 +1,5 @@
+import "server-only";
+
 import { DataMap, DataPath, Menu } from "@prisma/client";
 import { JSDOM } from "jsdom";
 import prisma from "./prisma";
