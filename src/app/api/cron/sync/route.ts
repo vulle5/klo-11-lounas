@@ -4,7 +4,7 @@ import {
   createMenuItemsForMenu,
   findOrCreateMenuForLocation,
 } from "@/utils/server/scripts";
-import { revalidatePath } from "next/cache";
+import { revalidatePathAndFetch } from "@/utils/server/routeHandler";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   });
 
   console.log("Revalidating home page...");
-  revalidatePath("/");
+  revalidatePathAndFetch(request, "/");
 
   return NextResponse.json({ revalidated: true, date: new Date() });
 }

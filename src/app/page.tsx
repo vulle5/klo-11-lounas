@@ -1,4 +1,4 @@
-import { dateFormatter } from "@/utils";
+import { dateTimeFormatter } from "@/utils";
 import MenuList from "./components/MenuList";
 
 export default async function Home() {
@@ -8,7 +8,7 @@ export default async function Home() {
     <main className="p-2 md:p-4">
       <h1 className="mb-4 text-3xl">Klo 11 Lounas</h1>
       <p className="mb-2 text-sm text-gray-600 dark:text-gray-400">
-        {dateFormatter.format(today)}
+        {dateTimeFormatter.format(today)}
       </p>
       <MenuList date={today} />
     </main>
