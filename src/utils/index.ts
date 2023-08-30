@@ -1,7 +1,7 @@
 /**
  * Returns a new string where runs of the same character that occur in this set are replaced by a single character.
- * 
- * If charSet is not given, all runs of identical characters are replaced by a single character. 
+ *
+ * If charSet is not given, all runs of identical characters are replaced by a single character.
  * @param str String to squeeze
  * @param charSet Set of characters to squeeze
  */
@@ -32,4 +32,14 @@ export const dateFormatter = new Intl.DateTimeFormat("fi-FI", {
   year: "numeric",
   month: "long",
   day: "numeric",
+});
+
+export const dateTimeFormatter = new Intl.DateTimeFormat("fi-FI", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
 });

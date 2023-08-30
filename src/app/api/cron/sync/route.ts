@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
   });
 
-  // Revalidate all pages
+  console.log("Revalidating home page...");
   revalidatePath("/");
 
   return NextResponse.json({ revalidated: true, date: new Date() });
