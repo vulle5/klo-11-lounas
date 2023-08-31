@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   console.log(`Syncing ${allLocationIds.length} locations...`);
 
-  allLocationIds.forEach(async ({ id }) => {
+  const createMenuPromises = allLocationIds.map(async ({ id }) => {
     try {
       const menu = await findOrCreateMenuForLocation(id);
 
@@ -29,7 +29,11 @@ export async function GET(request: NextRequest) {
     }
   });
 
-  console.log("Revalidating home page...");
+  await Promise.all(createMenuPromises);
+
+  console.log("All menus synced successfully. Revalidating home page...");
+  // Returns a promise but we don't need to wait for it to finish
+  // to avoid hitting cron job timeout of 10 seconds
   revalidatePathAndFetch(request, "/");
 
   return NextResponse.json({ revalidated: true, date: new Date() });
