@@ -32,9 +32,7 @@ export async function GET(request: NextRequest) {
   await Promise.all(createMenuPromises);
 
   console.log("All menus synced successfully. Revalidating home page...");
-  // Returns a promise but we don't need to wait for it to finish
-  // to avoid hitting cron job timeout of 10 seconds
-  revalidatePathAndFetch(request, "/");
+  await revalidatePathAndFetch(request, "/");
 
   return NextResponse.json({ revalidated: true, date: new Date() });
 }
