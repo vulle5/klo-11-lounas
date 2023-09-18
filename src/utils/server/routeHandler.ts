@@ -1,11 +1,9 @@
-import "server-only";
+import 'server-only';
 
-import { revalidatePath, revalidateTag } from "next/cache";
-import { NextRequest } from "next/server";
+import { revalidatePath } from 'next/cache';
+import { NextRequest } from 'next/server';
 
 type RequestLike = Request | NextRequest;
-
-export const allowedHosts = ["localhost", "klo-11-lounas.vercel.app"];
 
 /**
  * Revalidate the path without waiting for the next request
@@ -16,10 +14,8 @@ export const revalidatePathAndFetch = async (
   request: RequestLike,
   path: string
 ) => {
-  const { hostname, origin } = new URL(request.url);
+  const { origin } = new URL(request.url);
 
-  if (allowedHosts.some((allowedHost) => hostname.includes(allowedHost))) {
-    revalidatePath(path);
-    await fetch(`${origin}${path}`);
-  }
+  revalidatePath(path);
+  await fetch(`${origin}${path}`);
 };

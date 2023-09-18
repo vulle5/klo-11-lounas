@@ -1,12 +1,13 @@
 {
   "name": "klo11-lounas",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest",
     "prisma:migrate": "dotenv -e .env.development.local -- npx prisma db push",
     "prisma:studio": "dotenv -e .env.development.local -- npx prisma studio",
     "prisma:generate": "dotenv -e .env.development.local -- prisma generate",
@@ -36,6 +37,7 @@
     "eslint-config-prettier": "^8.8.0",
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.3.0",
-    "prisma": "^5.2.0"
+    "prisma": "^5.2.0",
+    "vitest": "^0.34.4"
   }
 }
