@@ -27,9 +27,14 @@ describe('middleware', () => {
   describe('vercel cron job', () => {
     test('should set header and redirect to the correct url', () => {
       const request = new NextRequest(
-        'https://klo-11-lounas-mqr833jkr-vulle5.vercel.app/api/cron/sync?search=params&come=too'
+        'https://klo-11-lounas-mqr833jkr-vulle5.vercel.app/api/cron/sync?search=params&come=too',
+        {
+          headers: {
+            'user-agent': 'vercel-cron/1.0',
+            'x-should-exits': 'true',
+          },
+        }
       );
-      request.headers.set('user-agent', 'vercel-cron/1.0');
       const response = middleware(request);
 
       expect(response.headers.get('location')).toBe(
@@ -38,15 +43,20 @@ describe('middleware', () => {
       expect(response.headers.get('x-redirected-from')).toBe(
         'klo-11-lounas-mqr833jkr-vulle5.vercel.app'
       );
+      expect(response.headers.get('x-should-exits')).toBe('true');
       expect(response.status).toBe(308);
     });
 
     test('should not redirect if url is correct and is not from redirection', () => {
       const request = new NextRequest(
-        'https://klo-11-lounas.vercel.app/api/cron/sync'
+        'https://klo-11-lounas.vercel.app/api/cron/sync',
+        {
+          headers: {
+            'user-agent': 'vercel-cron/1.0',
+            'x-redirected-from': 'klo-11-lounas-mqr833jkr-vulle5.vercel.app',
+          },
+        }
       );
-      request.headers.set('user-agent', 'vercel-cron/1.0');
-      request.headers.set('X-Redirected-From', 'klo-11-lounas.vercel.app');
       const response = middleware(request);
 
       expect(response.status).toBe(200);
