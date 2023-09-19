@@ -6,7 +6,8 @@ describe('middleware', () => {
   test('should return 401 if hostname is not allowed', () => {
     const request = new NextRequest('https://example.com');
     const response = middleware(request);
-    expect(response?.status).toBe(401);
+
+    expect(response.status).toBe(401);
   });
 
   test('should return 200 if hostname is allowed', () => {
@@ -18,7 +19,33 @@ describe('middleware', () => {
     allowedHosts.forEach((allowedHost) => {
       const request = new NextRequest(`https://${allowedHost}`);
       const response = middleware(request);
-      expect(response?.status).toBe(200);
+
+      expect(response.status).toBe(200);
+    });
+  });
+
+  describe('vercel cron job', () => {
+    test('should redirect to the correct url', () => {
+      const request = new NextRequest(
+        'https://klo-11-lounas-mqr833jkr-vulle5.vercel.app/api/cron/sync?search=params&come=too'
+      );
+      request.headers.set('user-agent', 'vercel-cron/1.0');
+      const response = middleware(request);
+
+      expect(response.headers.get('location')).toBe(
+        'https://klo-11-lounas.vercel.app/api/cron/sync?search=params&come=too'
+      );
+      expect(response.status).toBe(302);
+    });
+
+    test('should not redirect if url is correct', () => {
+      const request = new NextRequest(
+        'https://klo-11-lounas.vercel.app/api/cron/sync'
+      );
+      request.headers.set('user-agent', 'vercel-cron/1.0');
+      const response = middleware(request);
+
+      expect(response.status).toBe(200);
     });
   });
 });
