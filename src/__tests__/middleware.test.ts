@@ -35,14 +35,15 @@ describe('middleware', () => {
       expect(response.headers.get('location')).toBe(
         'https://klo-11-lounas.vercel.app/api/cron/sync?search=params&come=too'
       );
-      expect(response.status).toBe(302);
+      expect(response.status).toBe(301);
     });
 
-    test('should not redirect if url is correct', () => {
+    test('should not redirect if url is correct and is not from redirection', () => {
       const request = new NextRequest(
         'https://klo-11-lounas.vercel.app/api/cron/sync'
       );
       request.headers.set('user-agent', 'vercel-cron/1.0');
+      request.headers.set('X-Redirected-From', 'klo-11-lounas.vercel.app');
       const response = middleware(request);
 
       expect(response.status).toBe(200);
