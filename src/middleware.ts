@@ -5,7 +5,6 @@ import { appConfig } from '@config';
 export function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url);
   console.log(Array.from(requestUrl.searchParams.entries()));
-  console.log(Array.from(request.headers.entries()));
 
   // Check if the hostname is allowed
   if (
@@ -25,8 +24,9 @@ export function middleware(request: NextRequest) {
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
     redirectUrl.searchParams.set('redirected', 'true');
+    console.log(`Redirecting to ${redirectUrl.toString()}`);
 
-    return NextResponse.redirect(redirectUrl, { status: 302 });
+    return NextResponse.redirect(redirectUrl.toString(), { status: 302 });
   }
 
   return NextResponse.next();
