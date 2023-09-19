@@ -20,21 +20,13 @@ export function middleware(request: NextRequest) {
   // TODO: Probably caused by bug in Vercel, remove when fixed
   if (
     request.headers.get('user-agent') === 'vercel-cron/1.0' &&
-    !request.headers.has('x-redirected-from')
+    !requestUrl.searchParams.has('redirected')
   ) {
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
     redirectUrl.searchParams.set('redirected', 'true');
-    console.log(redirectUrl.toString());
 
-    // Clone the headers to a new object and set the X-Redirected-From header
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-redirected-from', requestUrl.hostname);
-
-    return NextResponse.redirect(redirectUrl, {
-      status: 302,
-      headers: requestHeaders,
-    });
+    return NextResponse.redirect(redirectUrl, { status: 302 });
   }
 
   return NextResponse.next();
