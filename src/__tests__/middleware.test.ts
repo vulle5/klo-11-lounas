@@ -25,7 +25,7 @@ describe('middleware', () => {
   });
 
   describe('vercel cron job', () => {
-    test('should redirect to the correct url', () => {
+    test('should set header and redirect to the correct url', () => {
       const request = new NextRequest(
         'https://klo-11-lounas-mqr833jkr-vulle5.vercel.app/api/cron/sync?search=params&come=too'
       );
@@ -35,7 +35,10 @@ describe('middleware', () => {
       expect(response.headers.get('location')).toBe(
         'https://klo-11-lounas.vercel.app/api/cron/sync?search=params&come=too'
       );
-      expect(response.status).toBe(301);
+      expect(response.headers.get('x-redirected-from')).toBe(
+        'klo-11-lounas-mqr833jkr-vulle5.vercel.app'
+      );
+      expect(response.status).toBe(308);
     });
 
     test('should not redirect if url is correct and is not from redirection', () => {

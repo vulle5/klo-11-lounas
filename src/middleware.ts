@@ -4,6 +4,7 @@ import { appConfig } from '@config';
 
 export function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url);
+  console.log(Array.from(request.headers.entries()));
 
   // Check if the hostname is allowed
   if (
@@ -24,7 +25,7 @@ export function middleware(request: NextRequest) {
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
 
     return NextResponse.redirect(redirectUrl, {
-      status: 301,
+      status: 308,
       headers: { 'X-Redirected-From': requestUrl.hostname },
     });
   }
