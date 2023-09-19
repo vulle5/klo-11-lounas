@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { appConfig } from '@config';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url);
   console.log(Array.from(requestUrl.searchParams.entries()));
 
@@ -26,7 +26,12 @@ export function middleware(request: NextRequest) {
     redirectUrl.searchParams.set('redirected', 'true');
     console.log(`Redirecting to ${redirectUrl.toString()}`);
 
-    return NextResponse.redirect(redirectUrl.toString(), { status: 302 });
+    await fetch(redirectUrl.toString(), {
+      headers: {
+        'User-Agent': 'vercel-cron/1.0',
+      },
+    });
+    return NextResponse.json({ status: 'ok' }, { status: 200 });
   }
 
   console.log(`Allowed request from ${requestUrl.hostname}`);
