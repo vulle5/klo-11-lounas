@@ -31,7 +31,6 @@ export async function middleware(request: NextRequest) {
         'User-Agent': 'vercel-cron/1.0',
       },
     });
-    return NextResponse.json({ status: 'ok' }, { status: 200 });
   }
 
   console.log(`Allowed request from ${requestUrl.hostname}`);
