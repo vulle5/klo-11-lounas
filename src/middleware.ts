@@ -25,13 +25,14 @@ export function middleware(request: NextRequest) {
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
     redirectUrl.searchParams.set('redirected', 'true');
+    console.log(redirectUrl.toString());
 
     // Clone the headers to a new object and set the X-Redirected-From header
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-redirected-from', requestUrl.hostname);
 
     return NextResponse.redirect(redirectUrl, {
-      status: 308,
+      status: 302,
       headers: requestHeaders,
     });
   }
