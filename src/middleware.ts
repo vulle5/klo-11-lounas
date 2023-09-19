@@ -29,6 +29,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl.toString(), { status: 302 });
   }
 
+  console.log(`Allowed request from ${requestUrl.hostname}`);
   return NextResponse.next();
 }
 
