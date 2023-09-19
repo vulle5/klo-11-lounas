@@ -1,11 +1,11 @@
-import { expect, test, describe } from 'vitest';
+import { expect, test, describe, vi, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { middleware } from '../middleware';
 
 describe('middleware', () => {
-  test('should return 401 if hostname is not allowed', () => {
+  test('should return 401 if hostname is not allowed', async () => {
     const request = new NextRequest('https://example.com');
-    const response = middleware(request);
+    const response = await middleware(request);
 
     expect(response.status).toBe(401);
   });
@@ -16,43 +16,34 @@ describe('middleware', () => {
       'klo-11-lounas-git-main-vulle5.vercel.app',
       'klo-11-lounas-92dssfosi-vulle5.vercel.app',
     ];
-    allowedHosts.forEach((allowedHost) => {
+    allowedHosts.forEach(async (allowedHost) => {
       const request = new NextRequest(`https://${allowedHost}`);
-      const response = middleware(request);
+      const response = await middleware(request);
 
       expect(response.status).toBe(200);
     });
   });
 
   describe('vercel cron job', () => {
-    test('should set search param and redirect to the correct url', () => {
+    test('should fetch the production url', async () => {
       const request = new NextRequest(
-        'https://klo-11-lounas-mqr833jkr-vulle5.vercel.app/api/cron/sync',
+        'https://klo-11-lounas-92dssfosi-vulle5.vercel.app/api/cron/sync',
         {
           headers: {
-            'user-agent': 'vercel-cron/1.0',
+            'User-Agent': 'vercel-cron/1.0',
           },
         }
       );
-      const response = middleware(request);
+      const response = await middleware(request);
 
-      expect(response.headers.get('location')).toBe(
-        'https://klo-11-lounas.vercel.app/api/cron/sync?redirected=true'
-      );
-      expect(response.status).toBe(302);
-    });
-
-    test('should not redirect if url is correct and is not from redirection', () => {
-      const request = new NextRequest(
-        'https://klo-11-lounas.vercel.app/api/cron/sync?redirected=true',
+      expect(fetch).toHaveBeenCalledWith(
+        'https://klo-11-lounas.vercel.app/api/cron/sync',
         {
           headers: {
-            'user-agent': 'vercel-cron/1.0',
+            'User-Agent': 'vercel-cron/1.0',
           },
         }
       );
-      const response = middleware(request);
-
       expect(response.status).toBe(200);
     });
   });
