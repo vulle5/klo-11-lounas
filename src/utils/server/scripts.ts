@@ -1,10 +1,10 @@
-import "server-only";
+import 'server-only';
 
-import { DataMap, DataPath, Menu } from "@prisma/client";
-import { JSDOM } from "jsdom";
-import prisma from "./prisma";
-import { get } from "lodash";
-import { squeeze } from "@/utils";
+import { DataMap, DataPath, Menu } from '@prisma/client';
+import { JSDOM } from 'jsdom';
+import prisma from './prisma';
+import { get } from 'lodash';
+import { squeeze } from '@/utils';
 
 type DataMapWithPaths = DataMap & { paths: DataPath[] };
 type ResolvedPromiseType<Type> = Type extends Promise<infer X> ? X : never;
@@ -22,7 +22,7 @@ export async function createLocation({
       dataMap: {
         create: {
           dataUrl,
-          dataType: "json",
+          dataType: 'json',
         },
       },
     },
@@ -84,14 +84,20 @@ export async function createMenuItemsForMenu(menu: MenuWithDataMap) {
     return;
   }
 
-  if (menu.location.dataMap.dataType === "json") {
-    await createMenuItemsForMenuFromJson(menu);
-  } else if (menu.location.dataMap.dataType === "html") {
-    await createMenuItemsForMenuFromHtml(menu);
-  } else {
-    throw new Error(
-      `DataMap dataType ${menu.location.dataMap.dataType} not supported`
-    );
+  switch (menu.location.dataMap.dataType) {
+    case 'json':
+      await createMenuItemsForMenuFromJson(menu);
+      break;
+    case 'old_html':
+      await DEPRECATED_createMenuItemsForMenuFromHtml(menu);
+      break;
+    case 'html':
+      await createMenuItemsForMenuFromHtml(menu);
+      break;
+    default:
+      throw new Error(
+        `DataMap dataType ${menu.location.dataMap.dataType} not supported`
+      );
   }
 }
 
@@ -104,26 +110,26 @@ async function createMenuItemsForMenuFromJson({
   }
 
   // Fetch data for location using dataMap url
-  const data = await fetch(dataMap.dataUrl, { cache: "no-cache" })
+  const data = await fetch(dataMap.dataUrl, { cache: 'no-cache' })
     .then((res) => res.json())
     .catch((err) => {
       throw new Error(`Error fetching data from ${dataMap.dataUrl}: ${err}`);
     });
   if (!data) {
-    throw new Error("Data not found");
+    throw new Error('Data not found');
   }
 
   // Find menu items from data
-  const menuItemsPath = findDataPath(dataMap, "Menu", "items");
+  const menuItemsPath = findDataPath(dataMap, 'Menu', 'items');
   const menusInData = get(data, menuItemsPath.path);
   if (!Array.isArray(menusInData)) {
-    throw new Error("Menus not found from data");
+    throw new Error('Menus not found from data');
   }
 
   // Find menu item name, price paths and menu date from dataMap
-  const menuItemNamePath = findDataPath(dataMap, "MenuItem", "name");
-  const menuItemPricePath = findDataPath(dataMap, "MenuItem", "price");
-  const menuDatePath = findDataPath(dataMap, "Menu", "date");
+  const menuItemNamePath = findDataPath(dataMap, 'MenuItem', 'name');
+  const menuItemPricePath = findDataPath(dataMap, 'MenuItem', 'price');
+  const menuDatePath = findDataPath(dataMap, 'Menu', 'date');
 
   const menuInData = menusInData.find((dataMenu) =>
     parseDateFromDateTime(new Date(get(dataMenu, menuDatePath.path))).includes(
@@ -136,14 +142,14 @@ async function createMenuItemsForMenuFromJson({
 
   // Find the path to the menu items in the dataMap
   const menuItemsIdPath = dataMap.paths.find(
-    (path) => path.table === "Menu" && path.column === "id"
+    (path) => path.table === 'Menu' && path.column === 'id'
   );
 
   // If the path exists, the menu items are an array
   if (menuItemsIdPath) {
     const menuItemOrItems = get(menuInData, menuItemsIdPath.path);
     if (!Array.isArray(menuItemOrItems)) {
-      throw new Error("Menu items not found from data");
+      throw new Error('Menu items not found from data');
     }
     // Create menu items for each item in the array
     await createMenuItemsForJson(
@@ -194,7 +200,7 @@ async function createMenuItemsForJson(
   const data = menuItems
     .map((menuItem) => {
       const name = Array.isArray(get(menuItem, menuItemNamePath.path))
-        ? get(menuItem, menuItemNamePath.path).join(", ")
+        ? get(menuItem, menuItemNamePath.path).join(', ')
         : get(menuItem, menuItemNamePath.path);
 
       const price = get(menuItem, menuItemPricePath.path);
@@ -208,44 +214,44 @@ async function createMenuItemsForJson(
   } else if (data[0]) {
     await prisma.menuItem.create({ data: data[0] });
   } else {
-    throw new Error("Menu items not found from data when creating menu items");
+    throw new Error('Menu items not found from data when creating menu items');
   }
 }
 
 // Support for lounaat.info parsing only
-async function createMenuItemsForMenuFromHtml({
+async function DEPRECATED_createMenuItemsForMenuFromHtml({
   location: { dataMap },
   ...menu
 }: MenuWithDataMap) {
   if (!dataMap) {
     throw new Error(`json DataMap for location ${menu.locationId} not found`);
   }
-  if (new URL(dataMap.dataUrl).origin !== "https://www.lounaat.info") {
+  if (new URL(dataMap.dataUrl).origin !== 'https://www.lounaat.info') {
     throw new Error(
       `DataMap url ${dataMap.dataUrl} is not from lounaat.info. Currently only www.lounaat.info is supported.`
     );
   }
 
   // Fetch data for location using dataMap url
-  const data = await fetch(dataMap.dataUrl, { cache: "no-cache" })
+  const data = await fetch(dataMap.dataUrl, { cache: 'no-cache' })
     .then((res) => res.text())
     .catch((err) => {
       throw new Error(`Error fetching data from ${dataMap.dataUrl}: ${err}`);
     });
   if (!data) {
-    throw new Error("Data not found");
+    throw new Error('Data not found');
   }
 
   // Turn data into array of possible menus
   const {
     window: { document },
   } = new JSDOM(data);
-  const menus = Array.from(document.getElementById("menu")?.children ?? []);
+  const menus = Array.from(document.getElementById('menu')?.children ?? []);
 
   // Find menu with date from menu
   const menuInData = menus.find((menuElement) => {
     const possibleMenuDate =
-      menuElement.getElementsByClassName("item-header")[0]?.textContent;
+      menuElement.getElementsByClassName('item-header')[0]?.textContent;
 
     if (!possibleMenuDate) return false;
 
@@ -254,7 +260,7 @@ async function createMenuItemsForMenuFromHtml({
 
   // Find menu items from data
   const menuItemsInData = Array.from(
-    menuInData?.getElementsByClassName("item-body") ?? []
+    menuInData?.getElementsByClassName('item-body') ?? []
   ).at(0);
   if (!menuItemsInData) {
     throw new Error(
@@ -264,7 +270,7 @@ async function createMenuItemsForMenuFromHtml({
 
   // From each menuItemsInData, find all elements with class 'menu-item'
   const menuItems = Array.from(
-    menuItemsInData.getElementsByClassName("menu-item")
+    menuItemsInData.getElementsByClassName('menu-item')
   );
 
   return createMenuItemFromHtml(menuItems, menu);
@@ -275,11 +281,11 @@ async function createMenuItemFromHtml(menuItems: Element[], menu: Menu) {
   const data = menuItems
     .map((menuItem) => {
       const name = squeeze(
-        menuItem.getElementsByClassName("dish")[0]?.textContent?.trim() ?? "",
-        " "
+        menuItem.getElementsByClassName('dish')[0]?.textContent?.trim() ?? '',
+        ' '
       );
       const price = extractPrice(
-        menuItem.getElementsByClassName("price")[0]?.textContent ?? ""
+        menuItem.getElementsByClassName('price')[0]?.textContent ?? ''
       );
 
       return { name, price, menuId: menu.id };
@@ -289,7 +295,7 @@ async function createMenuItemFromHtml(menuItems: Element[], menu: Menu) {
   if (data.length >= 1) {
     await prisma.menuItem.createMany({ data });
   } else {
-    throw new Error("Menu items not found from data when creating menu items");
+    throw new Error('Menu items not found from data when creating menu items');
   }
 }
 
@@ -299,6 +305,13 @@ function parseDateFromDateTime(date: Date): string {
     date.getMonth(),
     date.getDate()
   ).toString();
+}
+
+async function createMenuItemsForMenuFromHtml({
+  location: { dataMap },
+  ...menu
+}: MenuWithDataMap) {
+  return;
 }
 
 // Parse date like 28.8. from Date object

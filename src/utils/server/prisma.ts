@@ -1,6 +1,6 @@
-import "server-only";
+import 'server-only';
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 
 let prisma: PrismaClient;
 prisma ??= new PrismaClient();
