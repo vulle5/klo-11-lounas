@@ -1,12 +1,12 @@
 import 'server-only';
 
 import { DataPath, Menu } from '@prisma/client';
-import jsdom, { JSDOM } from 'jsdom';
+import { JSDOM, VirtualConsole } from 'jsdom';
 import prisma from './prisma';
 import { get } from 'lodash';
 import { squeeze } from '@/utils';
 
-const virtualConsole = new jsdom.VirtualConsole();
+const virtualConsole = new VirtualConsole();
 virtualConsole.on('error', () => {
   // No-op to skip console errors.
 });
