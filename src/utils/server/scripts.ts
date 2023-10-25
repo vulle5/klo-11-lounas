@@ -12,6 +12,7 @@ virtualConsole.on('error', () => {
 });
 
 type ResolvedPromiseType<Type> = Type extends Promise<infer X> ? X : never;
+type MenuWithDataMap = ResolvedPromiseType<ReturnType<typeof findOrCreateMenuForLocation>>;
 
 export async function createLocation({ name, dataUrl }: { name: string; dataUrl: string }) {
   return await prisma.location.create({
@@ -67,8 +68,6 @@ export async function findOrCreateMenuForLocation(locationId: number) {
   return menu;
 }
 
-type MenuWithDataMap = ResolvedPromiseType<ReturnType<typeof findOrCreateMenuForLocation>>;
-
 export async function createMenuItemsForMenu(menu: MenuWithDataMap) {
   if (!menu.location.dataMap) {
     throw new Error(`DataMap for location ${menu.locationId} not found`);
@@ -93,7 +92,10 @@ export async function createMenuItemsForMenu(menu: MenuWithDataMap) {
   }
 }
 
-async function createMenuItemsForMenuFromJson({ location: { dataMap }, ...menu }: MenuWithDataMap) {
+export async function createMenuItemsForMenuFromJson({
+  location: { dataMap },
+  ...menu
+}: MenuWithDataMap) {
   if (!dataMap || !(dataMap.dataType === 'json')) {
     throw new Error(`json DataMap for location ${menu.locationId} not found`);
   }
@@ -148,15 +150,6 @@ async function createMenuItemsForMenuFromJson({ location: { dataMap }, ...menu }
   }
 }
 
-function findDataPath(paths: DataPath[], table: string, column: string): DataPath {
-  const path = paths.find((path) => path.table === table && path.column === column);
-  if (!path) {
-    throw new Error(`DataPath not found for table: ${table}, column: ${column}`);
-  }
-
-  return path;
-}
-
 async function createMenuItemsForJson(
   menuItemOrItems: any[],
   menuItemNamePath: DataPath,
@@ -188,7 +181,105 @@ async function createMenuItemsForJson(
   }
 }
 
-// Support for lounaat.info parsing only
+export async function createMenuItemsForMenuFromHtml({
+  location: { dataMap },
+  ...menu
+}: MenuWithDataMap) {
+  if (!dataMap || !(dataMap.dataType === 'html')) {
+    throw new Error(`html DataMap for location ${menu.locationId} not found`);
+  }
+
+  // Fetch data for location using dataMap url
+  const htmlString = await fetch(dataMap.dataUrl, { cache: 'no-cache' })
+    .then((res) => res.text())
+    .catch((err) => {
+      throw new Error(`Error fetching data from ${dataMap.dataUrl}: ${err}`);
+    });
+  if (!htmlString) {
+    throw new Error('Data not found');
+  }
+
+  // Get data paths from dataMap
+  const menuItemsPath = findDataPath(dataMap.paths, 'Menu', 'items');
+  const menuDatePath = findDataPath(dataMap.paths, 'Menu', 'date');
+  const menuItemNamePath = findDataPath(dataMap.paths, 'MenuItem', 'name');
+
+  // Parse data to DOM
+  const {
+    window: { document },
+  } = new JSDOM(htmlString, { virtualConsole });
+
+  // Find menu with date from menu
+  const menuInData = Array.from(document.querySelectorAll(menuItemsPath.path)).find(
+    (menuElement) => {
+      const possibleMenuDate = menuElement.querySelector(menuDatePath.path)?.textContent;
+
+      if (!possibleMenuDate) return;
+
+      return possibleMenuDate.includes(parseDateToFindHTMLMenu(menu.date));
+    }
+  );
+
+  if (!menuInData) {
+    throw new Error(`Menu for date ${menu.date} not found from data`);
+  }
+
+  // Find menu items from data
+  const menuItemsInData = Array.from(menuInData.querySelectorAll(menuItemNamePath.path));
+
+  if (!menuItemsInData) {
+    throw new Error(
+      `Menus items not found from data. Element with selector '${menuItemNamePath.path}' not found`
+    );
+  }
+
+  // Find menu item price path from dataMap
+  let menuItemPricePath: DataPath | null;
+  try {
+    menuItemPricePath = findDataPath(dataMap.paths, 'MenuItem', 'price');
+  } catch (error) {
+    console.log('No price path found for menu items. Trying to extract price from menu item name');
+  }
+
+  // Create menu item objects for prisma
+  const data = menuItemsInData
+    .map((menuItem, index) => {
+      const textContent = menuItem.textContent ?? '';
+      const price = menuItemPricePath
+        ? menuItemsInData[index]?.querySelector(menuItemPricePath.path)?.textContent
+        : extractPrice(textContent);
+      const name = squeeze(
+        // Remove price from name if price is contained in name
+        menuItemPricePath ? textContent : textContent.replace(/\d{1,3}([,.]\d{2}) ?\€?/, ''),
+        ' '
+      ).trim();
+
+      return { name, price, menuId: menu.id };
+    })
+    .filter((menuItem) => !!menuItem.name);
+
+  return createMenuItemFromHtml(data);
+}
+
+async function createMenuItemFromHtml(
+  data: {
+    name: string;
+    price: string | null | undefined;
+    menuId: number;
+  }[]
+) {
+  if (data.length >= 1) {
+    await prisma.menuItem.createMany({ data });
+  } else {
+    throw new Error('Menu items not found from data when creating menu items');
+  }
+}
+
+/**
+ * Support for lounaat.info parsing only
+ * @param param0 MenuWithDataMap
+ * @deprecated Use createMenuItemsForMenuFromHtml instead
+ */
 async function DEPRECATED_createMenuItemsForMenuFromHtml({
   location: { dataMap },
   ...menu
@@ -236,10 +327,14 @@ async function DEPRECATED_createMenuItemsForMenuFromHtml({
   // From each menuItemsInData, find all elements with class 'menu-item'
   const menuItems = Array.from(menuItemsInData.getElementsByClassName('menu-item'));
 
-  return createMenuItemFromHtml(menuItems, menu);
+  return DEPRECATED_createMenuItemFromHtml(menuItems, menu);
 }
 
-async function createMenuItemFromHtml(menuItems: Element[], menu: Menu) {
+/**
+ * @see DEPRECATED_createMenuItemsForMenuFromHtml
+ * @deprecated Use createMenuItemsForMenuFromHtml instead
+ */
+async function DEPRECATED_createMenuItemFromHtml(menuItems: Element[], menu: Menu) {
   // Create menu item objects for prisma
   const data = menuItems
     .map((menuItem) => {
@@ -260,55 +355,17 @@ async function createMenuItemFromHtml(menuItems: Element[], menu: Menu) {
   }
 }
 
-function parseDateFromDateTime(date: Date): string {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toString();
+function findDataPath(paths: DataPath[], table: string, column: string): DataPath {
+  const path = paths.find((path) => path.table === table && path.column === column);
+  if (!path) {
+    throw new Error(`DataPath not found for table: ${table}, column: ${column}`);
+  }
+
+  return path;
 }
 
-export async function createMenuItemsForMenuFromHtml({
-  location: { dataMap },
-  ...menu
-}: MenuWithDataMap) {
-  if (!dataMap || !(dataMap.dataType === 'html')) {
-    throw new Error(`html DataMap for location ${menu.locationId} not found`);
-  }
-
-  // Fetch data for location using dataMap url
-  const htmlString = await fetch(dataMap.dataUrl, { cache: 'no-cache' })
-    .then((res) => res.text())
-    .catch((err) => {
-      throw new Error(`Error fetching data from ${dataMap.dataUrl}: ${err}`);
-    });
-  if (!htmlString) {
-    throw new Error('Data not found');
-  }
-
-  // Get data paths from dataMap
-  const menuItemsPath = findDataPath(dataMap.paths, 'Menu', 'items');
-  const menuDatePath = findDataPath(dataMap.paths, 'Menu', 'date');
-  // const menuItemNamePath = findDataPath(dataMap, 'MenuItem', 'name');
-  // const menuItemPricePath = findDataPath(dataMap, 'MenuItem', 'price');
-
-  // Parse data to DOM
-  const {
-    window: { document },
-  } = new JSDOM(htmlString, { virtualConsole });
-
-  // Find menu with date from menu
-  const menuInData = Array.from(document.querySelectorAll(menuItemsPath.path)).find(
-    (menuElement) => {
-      const possibleMenuDate = menuElement.querySelector(menuDatePath.path)?.textContent;
-
-      if (!possibleMenuDate) return;
-
-      return possibleMenuDate.includes(parseDateToFindHTMLMenu(menu.date));
-    }
-  );
-
-  // if (!menuInData) {
-  //   throw new Error(`Menu for date ${menu.date} not found from data`);
-  // }
-
-  return menuInData;
+function parseDateFromDateTime(date: Date): string {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).toString();
 }
 
 // Parse date like 28.8. from Date object
@@ -317,7 +374,7 @@ function parseDateToFindHTMLMenu(date: Date): string {
 }
 
 function extractPrice(str: string): string | null {
-  const regex = /[\d.,]+/g;
+  const regex = /\d{1,3}([,.]\d{2})/g;
   const matches = str.match(regex);
   if (matches && matches.length > 0) {
     return matches[0];
