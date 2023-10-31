@@ -5,13 +5,13 @@ import { JSDOM, VirtualConsole } from 'jsdom';
 import prisma from './prisma';
 import { get } from 'lodash';
 import { squeeze } from '@/utils';
+import { ResolvedPromiseType } from '../types';
 
 const virtualConsole = new VirtualConsole();
 virtualConsole.on('error', () => {
   // No-op to skip console errors.
 });
 
-type ResolvedPromiseType<Type> = Type extends Promise<infer X> ? X : never;
 type MenuWithDataMap = ResolvedPromiseType<ReturnType<typeof findOrCreateMenuForLocation>>;
 
 export async function createLocation({ name, dataUrl }: { name: string; dataUrl: string }) {
