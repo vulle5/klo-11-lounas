@@ -1,12 +1,10 @@
-import "./globals.css";
-import { Inter } from "next/font/google";
+import './globals.css';
+import { GeistSans, GeistMono } from 'geist/font';
 
 export const metadata = {
-  title: "Klo 11 lounas",
-  description: "Taikalan lounaslista",
+  title: 'Klo 11 lounas',
+  description: 'Taikalan lounaslista',
 };
-
-const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export default function RootLayout({
   children,
@@ -14,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body>{children}</body>
     </html>
   );
