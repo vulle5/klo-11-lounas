@@ -1,4 +1,3 @@
-import { Menu } from '@prisma/client';
 import { type getMenus } from '@/utils/data/menus';
 import { ResolvedPromiseType } from '@/utils/types';
 
