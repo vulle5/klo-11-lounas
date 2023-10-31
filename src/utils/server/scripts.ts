@@ -5,13 +5,13 @@ import { JSDOM, VirtualConsole } from 'jsdom';
 import prisma from './prisma';
 import { get } from 'lodash';
 import { squeeze } from '@/utils';
+import { ResolvedPromiseType } from '../types';
 
 const virtualConsole = new VirtualConsole();
 virtualConsole.on('error', () => {
   // No-op to skip console errors.
 });
 
-type ResolvedPromiseType<Type> = Type extends Promise<infer X> ? X : never;
 type MenuWithDataMap = ResolvedPromiseType<ReturnType<typeof findOrCreateMenuForLocation>>;
 
 export async function createLocation({ name, dataUrl }: { name: string; dataUrl: string }) {
@@ -151,7 +151,7 @@ export async function createMenuItemsForMenuFromJson({
 }
 
 async function createMenuItemsForJson(
-  menuItemOrItems: any[],
+  menuItemOrItems: any,
   menuItemNamePath: DataPath,
   menuItemPricePath: DataPath,
   menu: Menu
@@ -161,11 +161,17 @@ async function createMenuItemsForJson(
 
   // Create menu item objects for prisma
   const data = menuItems
-    .map((menuItem) => {
-      const name = Array.isArray(get(menuItem, menuItemNamePath.path))
-        ? get(menuItem, menuItemNamePath.path).join(', ')
-        : get(menuItem, menuItemNamePath.path);
+    .flatMap((menuItem) => {
+      // If the menu item name is an array, create a menu item for each name
+      if (Array.isArray(get(menuItem, menuItemNamePath.path))) {
+        return get(menuItem, menuItemNamePath.path).map((name: string) => {
+          const price = extractPrice(name);
 
+          return { name, price, menuId: menu.id };
+        });
+      }
+
+      const name = get(menuItem, menuItemNamePath.path);
       const price = get(menuItem, menuItemPricePath.path);
 
       return { name, price, menuId: menu.id };
