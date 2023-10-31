@@ -151,7 +151,7 @@ export async function createMenuItemsForMenuFromJson({
 }
 
 async function createMenuItemsForJson(
-  menuItemOrItems: any[],
+  menuItemOrItems: any,
   menuItemNamePath: DataPath,
   menuItemPricePath: DataPath,
   menu: Menu
@@ -161,11 +161,17 @@ async function createMenuItemsForJson(
 
   // Create menu item objects for prisma
   const data = menuItems
-    .map((menuItem) => {
-      const name = Array.isArray(get(menuItem, menuItemNamePath.path))
-        ? get(menuItem, menuItemNamePath.path).join(', ')
-        : get(menuItem, menuItemNamePath.path);
+    .flatMap((menuItem) => {
+      // If the menu item name is an array, create a menu item for each name
+      if (Array.isArray(get(menuItem, menuItemNamePath.path))) {
+        return get(menuItem, menuItemNamePath.path).map((name: string) => {
+          const price = extractPrice(name);
 
+          return { name, price, menuId: menu.id };
+        });
+      }
+
+      const name = get(menuItem, menuItemNamePath.path);
       const price = get(menuItem, menuItemPricePath.path);
 
       return { name, price, menuId: menu.id };
