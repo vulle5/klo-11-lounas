@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest --config ./vitest.config.ts",
-    "prisma:migrate": "dotenv -e .env.development.local -- npx prisma db push",
     "prisma:studio": "dotenv -e .env.development.local -- npx prisma studio",
     "prisma:generate": "dotenv -e .env.development.local -- prisma generate",
     "prisma:migrate:prod": "prisma migrate deploy"
