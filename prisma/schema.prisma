@@ -1,15 +1,12 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider          = "postgresql"
-  url               = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl         = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
-  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING") // used for migrations
+  url               = env("POSTGRES_PRISMA_URL")
+  directUrl         = env("POSTGRES_URL_NON_POOLING")
+  shadowDatabaseUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 model Location {
@@ -27,9 +24,9 @@ model DataMap {
   dataType   String     @default("json")
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-  paths      DataPath[]
-  location   Location   @relation(fields: [locationId], references: [id])
   locationId Int        @unique
+  location   Location   @relation(fields: [locationId], references: [id])
+  paths      DataPath[]
 }
 
 model DataPath {
@@ -39,8 +36,8 @@ model DataPath {
   table     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  dataMap   DataMap  @relation(fields: [dataMapId], references: [id])
   dataMapId Int
+  dataMap   DataMap  @relation(fields: [dataMapId], references: [id])
 }
 
 model Menu {
@@ -48,8 +45,8 @@ model Menu {
   date       DateTime   @db.Date
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
-  location   Location   @relation(fields: [locationId], references: [id])
   locationId Int
+  location   Location   @relation(fields: [locationId], references: [id])
   items      MenuItem[]
 
   @@index([date], type: Hash)
@@ -61,6 +58,6 @@ model MenuItem {
   price     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  menu      Menu     @relation(fields: [menuId], references: [id])
   menuId    Int
+  menu      Menu     @relation(fields: [menuId], references: [id])
 }

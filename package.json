@@ -13,7 +13,7 @@
     "prisma:migrate:prod": "prisma migrate deploy"
   },
   "dependencies": {
-    "@prisma/client": "^5.2.0",
+    "@prisma/client": "^5.5.2",
     "@types/node": "18.15.11",
     "@types/react": "18.2.9",
     "@types/react-dom": "18.2.4",
@@ -37,7 +37,7 @@
     "eslint-config-prettier": "^8.8.0",
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.3.0",
-    "prisma": "^5.2.0",
+    "prisma": "^5.5.2",
     "vitest": "^0.34.4"
   }
 }
