@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  db:
+    container_name: klo-11-lounas-db
+    image: postgres:15.4
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: database
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+  shadow_db:
+    container_name: klo-11-lounas-shadow-db
+    image: postgres:15.4
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: shadow-database
+    volumes:
+      - shadow_db_data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+volumes:
+  db_data:
+  shadow_db_data:
