@@ -349,8 +349,12 @@ async function DEPRECATED_createMenuItemFromHtml(menuItems: Element[], menu: Men
         ' '
       );
       const price = extractPrice(menuItem.getElementsByClassName('price')[0]?.textContent ?? '');
+      const info = squeeze(
+        menuItem.getElementsByClassName('info')[0]?.textContent?.trim() ?? '',
+        ' '
+      );
 
-      return { name, price, menuId: menu.id };
+      return { name, price, info, menuId: menu.id };
     })
     .filter((menuItem) => !!menuItem.name);
 
