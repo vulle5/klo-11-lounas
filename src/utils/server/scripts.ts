@@ -239,12 +239,18 @@ export async function createMenuItemsForMenuFromHtml({
     );
   }
 
-  // Find menu item price path from dataMap
-  let menuItemPricePath: DataPath | null;
+  // Find menu item price and info paths from dataMap
+  let menuItemPricePath: DataPath | undefined = undefined;
+  let menuItemInfoPath: DataPath | undefined = undefined;
   try {
     menuItemPricePath = findDataPath(dataMap.paths, 'MenuItem', 'price');
+    menuItemInfoPath = findDataPath(dataMap.paths, 'MenuItem', 'info');
   } catch (error) {
-    console.log('No price path found for menu items. Trying to extract price from menu item name');
+    if (!menuItemPricePath) {
+      console.log(
+        'No price path found for menu items. Trying to extract price from menu item name'
+      );
+    }
   }
 
   // Create menu item objects for prisma
@@ -259,21 +265,25 @@ export async function createMenuItemsForMenuFromHtml({
         menuItemPricePath ? textContent : textContent.replace(/\d{1,3}([,.]\d{2}) ?\€?/, ''),
         ' '
       ).trim();
+      const info = menuItemInfoPath
+        ? menuItemsInData[index]?.querySelector(menuItemInfoPath.path)?.textContent
+        : '';
 
-      return { name, price, menuId: menu.id };
+      return { name, price, info, menuId: menu.id };
     })
-    .filter((menuItem) => !!menuItem.name);
+    .filter((menuItem) => !!menuItem.name && !!menuItem.info);
 
   return createMenuItemFromHtml(data);
 }
 
-async function createMenuItemFromHtml(
-  data: {
-    name: string;
-    price: string | null | undefined;
-    menuId: number;
-  }[]
-) {
+type MenuItem = {
+  name: string;
+  price: string | null | undefined;
+  info: string | null | undefined;
+  menuId: number;
+};
+
+async function createMenuItemFromHtml(data: MenuItem[]) {
   if (data.length >= 1) {
     await prisma.menuItem.createMany({ data });
   } else {
@@ -356,7 +366,7 @@ async function DEPRECATED_createMenuItemFromHtml(menuItems: Element[], menu: Men
 
       return { name, price, info, menuId: menu.id };
     })
-    .filter((menuItem) => !!menuItem.name);
+    .filter((menuItem) => !!menuItem.name && !!menuItem.info);
 
   if (data.length >= 1) {
     await prisma.menuItem.createMany({ data });
