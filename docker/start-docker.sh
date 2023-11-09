@@ -1,0 +1,1 @@
+docker-compose -p klo-11-lounas up -d
