@@ -4,7 +4,7 @@ import { DataPath, Menu } from '@prisma/client';
 import { JSDOM, VirtualConsole } from 'jsdom';
 import prisma from './prisma';
 import { get } from 'lodash';
-import { squeeze } from '@/utils';
+import { isNullish, squeeze } from '@/utils';
 import { ResolvedPromiseType } from '../types';
 
 const virtualConsole = new VirtualConsole();
@@ -271,7 +271,26 @@ export async function createMenuItemsForMenuFromHtml({
 
       return { name, price, info, menuId: menu.id };
     })
-    .filter((menuItem) => !!menuItem.name && !!menuItem.info);
+    .filter(isValidMenuItem);
+
+  console.log(
+    menuItemsInData.map((menuItem, index) => {
+      const textContent = menuItem.textContent ?? '';
+      const price = menuItemPricePath
+        ? menuItemsInData[index]?.querySelector(menuItemPricePath.path)?.textContent
+        : extractPrice(textContent);
+      const name = squeeze(
+        // Remove price from name if price is contained in name
+        menuItemPricePath ? textContent : textContent.replace(/\d{1,3}([,.]\d{2}) ?\€?/, ''),
+        ' '
+      ).trim();
+      const info = menuItemInfoPath
+        ? menuItemsInData[index]?.querySelector(menuItemInfoPath.path)?.textContent
+        : '';
+
+      return { name, price, info, menuId: menu.id };
+    })
+  );
 
   return createMenuItemFromHtml(data);
 }
@@ -366,7 +385,7 @@ async function DEPRECATED_createMenuItemFromHtml(menuItems: Element[], menu: Men
 
       return { name, price, info, menuId: menu.id };
     })
-    .filter((menuItem) => !!menuItem.name && !!menuItem.info);
+    .filter(isValidMenuItem);
 
   if (data.length >= 1) {
     await prisma.menuItem.createMany({ data });
@@ -400,4 +419,8 @@ function extractPrice(str: string): string | null {
     return matches[0];
   }
   return null;
+}
+
+function isValidMenuItem(menuItem: MenuItem) {
+  return !isNullish(menuItem.name) && !isNullish(menuItem.info);
 }

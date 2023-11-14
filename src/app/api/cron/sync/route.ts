@@ -1,12 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/utils/server/prisma";
-import {
-  createMenuItemsForMenu,
-  findOrCreateMenuForLocation,
-} from "@/utils/server/scripts";
-import { revalidatePathAndFetch } from "@/utils/server/routeHandler";
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/utils/server/prisma';
+import { createMenuItemsForMenu, findOrCreateMenuForLocation } from '@/utils/server/scripts';
+import { revalidatePathAndFetch } from '@/utils/server/routeHandler';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 // Syncs the data from the dataUrl to the database
 export async function GET(request: NextRequest) {
@@ -31,8 +28,8 @@ export async function GET(request: NextRequest) {
 
   await Promise.all(createMenuPromises);
 
-  console.log("All menus synced successfully. Revalidating home page...");
-  await revalidatePathAndFetch(request, "/");
+  console.log('All menus synced successfully. Revalidating home page...');
+  await revalidatePathAndFetch(request, '/');
 
   return NextResponse.json({ revalidated: true, date: new Date() });
 }
