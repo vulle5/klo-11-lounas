@@ -14,7 +14,7 @@ export default function Menu({ menu }: { menu: MenuWithItemsAndLocation }) {
             {item.price && (
               <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">{item.price} €</span>
             )}
-            <div className="mt-1 text-xs italic text-gray-600 dark:text-gray-400">{item.info}</div>
+            <div className="mt-1 text-sm italic text-gray-600 dark:text-gray-400">{item.info}</div>
             {menu.items.length !== index + 1 && <hr className="my-2 border-t border-t-slate-500" />}
           </li>
         ))}
