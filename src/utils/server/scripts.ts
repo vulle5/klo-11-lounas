@@ -273,25 +273,6 @@ export async function createMenuItemsForMenuFromHtml({
     })
     .filter(isValidMenuItem);
 
-  console.log(
-    menuItemsInData.map((menuItem, index) => {
-      const textContent = menuItem.textContent ?? '';
-      const price = menuItemPricePath
-        ? menuItemsInData[index]?.querySelector(menuItemPricePath.path)?.textContent
-        : extractPrice(textContent);
-      const name = squeeze(
-        // Remove price from name if price is contained in name
-        menuItemPricePath ? textContent : textContent.replace(/\d{1,3}([,.]\d{2}) ?\€?/, ''),
-        ' '
-      ).trim();
-      const info = menuItemInfoPath
-        ? menuItemsInData[index]?.querySelector(menuItemInfoPath.path)?.textContent
-        : '';
-
-      return { name, price, info, menuId: menu.id };
-    })
-  );
-
   return createMenuItemFromHtml(data);
 }
 
