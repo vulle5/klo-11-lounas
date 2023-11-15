@@ -27,9 +27,11 @@ export async function GET(request: NextRequest) {
   });
 
   await Promise.all(createMenuPromises);
-
-  console.log('All menus synced successfully. Revalidating home page...');
-  await revalidatePathAndFetch(request, '/');
+  console.log('All menus synced successfully. Revalidating home page and api...');
+  await Promise.all([
+    revalidatePathAndFetch(request, '/'),
+    revalidatePathAndFetch(request, '/api/menus/today'),
+  ]);
 
   return NextResponse.json({ revalidated: true, date: new Date() });
 }
