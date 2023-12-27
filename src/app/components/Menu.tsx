@@ -1,11 +1,26 @@
 import { type getMenus } from '@/utils/data/menus';
 import { ResolvedPromiseType } from '@/utils/types';
+import RefreshMenuButton from './RefreshMenuButton';
 
 type MenuWithItemsAndLocation = ResolvedPromiseType<ReturnType<typeof getMenus>>[0];
 
+const MenuContainer = ({ children }: { children: React.ReactNode }) => (
+  <li className="rounded bg-slate-100 p-4 shadow-md dark:bg-slate-800">{children}</li>
+);
+
 export default function Menu({ menu }: { menu: MenuWithItemsAndLocation }) {
+  if (!menu.items.length) {
+    return (
+      <MenuContainer>
+        <h2 className="mb-5 text-2xl font-bold">{menu.location.name}</h2>
+        <p className="mb-5 text-gray-600 dark:text-gray-400">Ei lounas tietoja</p>
+        <RefreshMenuButton locationId={menu.locationId} />
+      </MenuContainer>
+    );
+  }
+
   return (
-    <li className="rounded bg-slate-100 p-4 shadow-md dark:bg-slate-800" key={menu.id}>
+    <MenuContainer key={menu.id}>
       <h2 className="mb-5 text-2xl font-bold">{menu.location.name}</h2>
       <ul className="flex flex-col">
         {menu.items.map((item, index) => (
@@ -19,6 +34,6 @@ export default function Menu({ menu }: { menu: MenuWithItemsAndLocation }) {
           </li>
         ))}
       </ul>
-    </li>
+    </MenuContainer>
   );
 }
