@@ -10,9 +10,23 @@ export const getMenus = async ({ date }: { date: Date }) => {
     where: {
       date: date,
     },
-    include: {
-      items: true,
-      location: true,
+    select: {
+      id: true,
+      date: true,
+      locationId: true,
+      items: {
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          info: true,
+        },
+      },
+      location: {
+        select: {
+          name: true,
+        },
+      },
     },
     orderBy: {
       location: {
