@@ -1,18 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { appConfig } from '@config';
 
 export async function middleware(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-
-  // Check if the hostname is allowed
-  if (!appConfig.allowedHosts.some((allowedHost) => allowedHost.test(requestUrl.hostname))) {
-    return NextResponse.json({ error: 'Host not allowed' }, { status: 401 });
-  }
+  const requestUrlObject = new URL(request.url);
 
   // Secure the cron endpoints
   if (
-    requestUrl.pathname.startsWith('/api/cron') &&
+    requestUrlObject.pathname.startsWith('/api/cron') &&
     request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
   ) {
     return NextResponse.json({ error: 'Unauthorized cron invocation' }, { status: 401 });
@@ -23,7 +17,7 @@ export async function middleware(request: NextRequest) {
   // TODO: Probably caused by bug in Vercel, remove when fixed
   if (
     request.headers.get('user-agent') === 'vercel-cron/1.0' &&
-    requestUrl.hostname !== 'klo-11-lounas.vercel.app'
+    requestUrlObject.hostname !== 'klo-11-lounas.vercel.app'
   ) {
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
