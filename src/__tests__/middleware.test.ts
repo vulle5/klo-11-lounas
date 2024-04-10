@@ -1,4 +1,4 @@
-import { expect, test, describe, vi, afterEach } from 'vitest';
+import { expect, test, describe } from 'vitest';
 import { NextRequest } from 'next/server';
 import { middleware } from '../middleware';
 
@@ -10,19 +10,23 @@ describe('middleware', () => {
     expect(response.status).toBe(401);
   });
 
-  test('should return 200 if hostname is allowed', () => {
+  test('should return 200 if hostname is allowed', async () => {
     const allowedHosts = [
       'klo-11-lounas.vercel.app',
       'klo-11-lounas-git-main-vulle5.vercel.app',
       'klo-11-lounas-92dssfosi-vulle5.vercel.app',
       'klo-11-lounas-git-5-api-for-menus-vulle5.vercel.app',
+      'klo-11-lounas-git-fork-somecontributor-main-vulle5s-projects.vercel.app',
     ];
-    allowedHosts.forEach(async (allowedHost) => {
-      const request = new NextRequest(`https://${allowedHost}`);
-      const response = await middleware(request);
 
-      expect(response.status).toBe(200);
-    });
+    await Promise.all(
+      allowedHosts.map(async (allowedHost) => {
+        const request = new NextRequest(`https://${allowedHost}`);
+        const response = await middleware(request);
+
+        expect(response.status).toBe(200);
+      }),
+    );
   });
 
   describe('vercel cron job', () => {
@@ -32,8 +36,9 @@ describe('middleware', () => {
         {
           headers: {
             'User-Agent': 'vercel-cron/1.0',
+            Authorization: 'Bearer development',
           },
-        }
+        },
       );
       const response = await middleware(request);
 
