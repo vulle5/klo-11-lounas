@@ -7,15 +7,15 @@ export async function middleware(request: NextRequest) {
 
   // Check if the hostname is allowed
   if (!appConfig.allowedHosts.some((allowedHost) => allowedHost.test(requestUrl.hostname))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Host not allowed' }, { status: 401 });
   }
 
   // Secure the cron endpoints
   if (
     requestUrl.pathname.startsWith('/api/cron') &&
-    request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`
+    request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
   ) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized cron invocation' }, { status: 401 });
   }
 
   // Use fetch to run vercel cron jobs in production url
