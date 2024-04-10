@@ -2,5 +2,6 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "editor.formatOnSave": true,
-  "prettier.printWidth": 100
+  "prettier.printWidth": 100,
+  "prettier.trailingComma": "all"
 }

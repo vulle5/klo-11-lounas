@@ -6,10 +6,14 @@ export async function middleware(request: NextRequest) {
   const requestUrl = new URL(request.url);
 
   // Check if the hostname is allowed
+  if (!appConfig.allowedHosts.some((allowedHost) => allowedHost.test(requestUrl.hostname))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Secure the cron endpoints
   if (
-    !appConfig.allowedHosts.some((allowedHost) =>
-      allowedHost.test(requestUrl.hostname)
-    )
+    requestUrl.pathname.startsWith('/api/cron') &&
+    request.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`
   ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
