@@ -10,12 +10,11 @@ type RequestLike = Request | NextRequest;
  *
  * Normally Next.js will serve the stale page first and serve revalidated page on subsequent requests.
  * */
-export const revalidatePathAndFetch = async (
-  request: RequestLike,
-  path: string
-) => {
+export const revalidatePathAndFetch = async (request: RequestLike, path: string) => {
   const { origin } = new URL(request.url);
 
   revalidatePath(path);
-  await fetch(`${origin}${path}`);
+  const pathToFetch = `${origin}${path}`;
+  console.log(`Fetching ${pathToFetch} to revalidate...`);
+  await fetch(pathToFetch);
 };

@@ -19,6 +19,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get('user-agent') === 'vercel-cron/1.0' &&
     requestUrlObject.hostname !== 'klo-11-lounas.vercel.app'
   ) {
+    console.log('Running vercel cron job, fetching the production url...');
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
 
