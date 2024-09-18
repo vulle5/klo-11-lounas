@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
 
-    console.log('Redirecting to:', redirectUrl);
+    console.log('Redirecting to:', redirectUrl.toString());
     await fetch(redirectUrl, {
       headers: {
         'User-Agent': 'vercel-cron/1.0',
