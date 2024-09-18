@@ -16,5 +16,5 @@ export const revalidatePathAndFetch = async (request: RequestLike, path: string)
   revalidatePath(path);
   const pathToFetch = `${origin}${path}`;
   console.log(`Fetching ${pathToFetch} to revalidate...`);
-  await fetch(pathToFetch);
+  await fetch(pathToFetch, { cache: 'no-store' });
 };

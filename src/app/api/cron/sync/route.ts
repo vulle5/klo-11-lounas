@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
     revalidatePathAndFetch(request, '/'),
     revalidatePathAndFetch(request, '/api/menus/today'),
   ]);
+  console.log('Revalidation done.');
 
   return NextResponse.json({ revalidated: true, date: new Date() });
 }
