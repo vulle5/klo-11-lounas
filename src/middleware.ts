@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/api/cron') &&
     request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
   ) {
+    console.error('Unauthorized cron invocation');
     return NextResponse.json({ error: 'Unauthorized cron invocation' }, { status: 401 });
   }
 
