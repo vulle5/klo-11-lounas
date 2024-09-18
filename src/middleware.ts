@@ -7,7 +7,6 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/api/cron') &&
     request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
   ) {
-    console.error('Unauthorized cron invocation');
     return NextResponse.json({ error: 'Unauthorized cron invocation' }, { status: 401 });
   }
 
@@ -20,8 +19,13 @@ export async function middleware(request: NextRequest) {
     const redirectUrl = new URL(request.url);
     redirectUrl.hostname = 'klo-11-lounas.vercel.app';
 
-    console.log('Redirecting to:', redirectUrl.toString());
-    return NextResponse.redirect(redirectUrl);
+    console.log('Redirecting to:', redirectUrl);
+    await fetch(redirectUrl, {
+      headers: {
+        'User-Agent': 'vercel-cron/1.0',
+      },
+    });
+    return NextResponse.json({ result: 'Redirected to production' });
   }
 }
 
