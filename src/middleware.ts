@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
+  const bearerToken = `Bearer ${process.env.CRON_SECRET}`;
+
   // Secure the cron endpoints
   if (
     request.nextUrl.pathname.startsWith('/api/cron') &&
-    request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
+    request.headers.get('authorization') !== bearerToken
   ) {
     return NextResponse.json({ error: 'Unauthorized cron invocation' }, { status: 401 });
   }
@@ -23,6 +25,7 @@ export async function middleware(request: NextRequest) {
     await fetch(redirectUrl, {
       headers: {
         'User-Agent': 'vercel-cron/1.0',
+        'Authorization': bearerToken,
       },
     });
     return NextResponse.json({ result: 'Redirected to production' });
