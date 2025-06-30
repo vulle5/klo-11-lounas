@@ -124,8 +124,8 @@ export async function createMenuItemsForMenuFromJson({
 
   const menuInData = menusInData.find((dataMenu) =>
     parseDateFromDateTime(new Date(get(dataMenu, menuDatePath.path))).includes(
-      parseDateFromDateTime(menu.date)
-    )
+      parseDateFromDateTime(menu.date),
+    ),
   );
   if (!menuInData) {
     throw new Error(`Menu for date ${menu.date} not found from data`);
@@ -133,7 +133,7 @@ export async function createMenuItemsForMenuFromJson({
 
   // Find the path to the menu items in the dataMap
   const menuItemsIdPath = dataMap.paths.find(
-    (path) => path.table === 'Menu' && path.column === 'id'
+    (path) => path.table === 'Menu' && path.column === 'id',
   );
 
   // If the path exists, the menu items are an array
@@ -154,7 +154,7 @@ async function createMenuItemsForJson(
   menuItemOrItems: any,
   menuItemNamePath: DataPath,
   menuItemPricePath: DataPath,
-  menu: Menu
+  menu: Menu,
 ) {
   // Transform menu item or items to array
   const menuItems = Array.isArray(menuItemOrItems) ? menuItemOrItems : [menuItemOrItems];
@@ -201,77 +201,91 @@ export async function createMenuItemsForMenuFromHtml({
     .catch((err) => {
       throw new Error(`Error fetching data from ${dataMap.dataUrl}: ${err}`);
     });
-  if (!htmlString) {
-    throw new Error('Data not found');
-  }
+  if (!htmlString) throw new Error('Data not found');
 
-  // Get data paths from dataMap
-  const menuItemsPath = findDataPath(dataMap.paths, 'Menu', 'items');
-  const menuDatePath = findDataPath(dataMap.paths, 'Menu', 'date');
-  const menuItemNamePath = findDataPath(dataMap.paths, 'MenuItem', 'name');
-
-  // Parse data to DOM
   const {
     window: { document },
   } = new JSDOM(htmlString, { virtualConsole });
 
-  // Find menu with date from menu
-  const menuInData = Array.from(document.querySelectorAll(menuItemsPath.path)).find(
-    (menuElement) => {
-      const possibleMenuDate = menuElement.querySelector(menuDatePath.path)?.textContent;
+  const dateToFind = parseDateToFindHTMLMenu(menu.date);
 
-      if (!possibleMenuDate) return;
+  // --- Get required paths for the parsing strategy ---
+  const menuDatePath = findDataPath(dataMap.paths, 'Menu', 'date');
+  const menuItemNamePath = findDataPath(dataMap.paths, 'MenuItem', 'name');
+  const menuItemsKeyAttrPath = findDataPath(dataMap.paths, 'Menu', 'items_key_attribute');
+  const menuItemsContainerPath = findDataPath(dataMap.paths, 'Menu', 'items_container');
 
-      return possibleMenuDate.includes(parseDateToFindHTMLMenu(menu.date));
-    }
+  // --- Optional paths ---
+  const menuItemPricePath = dataMap.paths.find(
+    (p) => p.table === 'MenuItem' && p.column === 'price',
+  );
+  const menuItemInfoPath = dataMap.paths.find((p) => p.table === 'MenuItem' && p.column === 'info');
+
+  // --- Find the date element to get the key for the menu container ---
+  const dateElement = Array.from(document.querySelectorAll(menuDatePath.path)).find((el) =>
+    el.textContent?.includes(dateToFind),
   );
 
-  if (!menuInData) {
-    throw new Error(`Menu for date ${menu.date} not found from data`);
-  }
-
-  // Find menu items from data
-  const menuItemsInData = Array.from(menuInData.querySelectorAll(menuItemNamePath.path));
-
-  if (!menuItemsInData) {
+  if (!dateElement) {
     throw new Error(
-      `Menus items not found from data. Element with selector '${menuItemNamePath.path}' not found`
+      `Date element for "${dateToFind}" not found using selector "${menuDatePath.path}"`,
     );
   }
 
-  // Find menu item price and info paths from dataMap
-  let menuItemPricePath: DataPath | undefined = undefined;
-  let menuItemInfoPath: DataPath | undefined = undefined;
-  try {
-    menuItemPricePath = findDataPath(dataMap.paths, 'MenuItem', 'price');
-    menuItemInfoPath = findDataPath(dataMap.paths, 'MenuItem', 'info');
-  } catch (error) {
-    if (!menuItemPricePath) {
-      console.log(
-        'No price path found for menu items. Trying to extract price from menu item name'
-      );
-    }
+  const key = dateElement.getAttribute(menuItemsKeyAttrPath.path);
+  if (!key) {
+    throw new Error(
+      `Could not find key attribute "${menuItemsKeyAttrPath.path}" from date element.`,
+    );
   }
 
-  // Create menu item objects for prisma
-  const data = menuItemsInData
-    .map((menuItem, index) => {
-      const textContent = menuItem.textContent ?? '';
-      const price = menuItemPricePath
-        ? menuItemsInData[index]?.querySelector(menuItemPricePath.path)?.textContent
-        : extractPrice(textContent);
-      const name = squeeze(
-        // Remove price from name if price is contained in name
-        menuItemPricePath ? textContent : textContent.replace(/\d{1,3}([,.]\d{2}) ?\€?/, ''),
-        ' '
-      ).trim();
-      const info = menuItemInfoPath
-        ? menuItemsInData[index]?.querySelector(menuItemInfoPath.path)?.textContent
-        : '';
+  // --- Find the menu container and extract items ---
+  const containerSelector = menuItemsContainerPath.path.replace('%KEY%', key);
+  const menuContainer = document.querySelector(containerSelector);
 
-      return { name, price, info, menuId: menu.id };
-    })
-    .filter(isValidMenuItem);
+  if (!menuContainer) {
+    throw new Error(`Menu container not found with selector "${containerSelector}"`);
+  }
+
+  const menuItemsInData = Array.from(menuContainer.querySelectorAll(menuItemNamePath.path));
+  if (menuItemsInData.length === 0) {
+    throw new Error(
+      `No menu items found within "${containerSelector}" using selector "${menuItemNamePath.path}"`,
+    );
+  }
+
+  // --- Extract overall price if available ---
+  // If the menu item price path is defined, we will try to extract the overall price
+  let overallPrice: string | null | undefined;
+  if (menuItemPricePath) {
+    const priceElement = menuContainer.querySelector(menuItemPricePath.path);
+    overallPrice = extractPrice(priceElement?.textContent ?? '');
+  }
+
+  // --- Map elements to Prisma data objects ---
+  const data = menuItemsInData.map((menuItemNode) => {
+    const textContent = menuItemNode.textContent ?? '';
+
+    // If the menu item has a price, use it; otherwise, extract the price from the text content
+    const price =
+      overallPrice ??
+      (menuItemPricePath
+        ? menuItemNode.querySelector(menuItemPricePath.path)?.textContent ??
+          extractPrice(textContent)
+        : extractPrice(textContent));
+
+    const name = squeeze(
+      // If there's a single price for all items, don't try to remove it from the name
+      overallPrice ? textContent : textContent.replace(/\d{1,3}([,.]\d{2}) ?\€?/, ''),
+      ' ',
+    ).trim();
+
+    const info = menuItemInfoPath
+      ? menuItemNode.querySelector(menuItemInfoPath.path)?.textContent ?? ''
+      : '';
+
+    return { name, price, info, menuId: menu.id };
+  });
 
   return createMenuItemFromHtml(data);
 }
@@ -305,7 +319,7 @@ async function DEPRECATED_createMenuItemsForMenuFromHtml({
   }
   if (new URL(dataMap.dataUrl).origin !== 'https://www.lounaat.info') {
     throw new Error(
-      `DataMap url ${dataMap.dataUrl} is not from lounaat.info. Currently only www.lounaat.info is supported.`
+      `DataMap url ${dataMap.dataUrl} is not from lounaat.info. Currently only www.lounaat.info is supported.`,
     );
   }
 
@@ -352,21 +366,19 @@ async function DEPRECATED_createMenuItemsForMenuFromHtml({
  */
 async function DEPRECATED_createMenuItemFromHtml(menuItems: Element[], menu: Menu) {
   // Create menu item objects for prisma
-  const data = menuItems
-    .map((menuItem) => {
-      const name = squeeze(
-        menuItem.getElementsByClassName('dish')[0]?.textContent?.trim() ?? '',
-        ' '
-      );
-      const price = extractPrice(menuItem.getElementsByClassName('price')[0]?.textContent ?? '');
-      const info = squeeze(
-        menuItem.getElementsByClassName('info')[0]?.textContent?.trim() ?? '',
-        ' '
-      );
+  const data = menuItems.map((menuItem) => {
+    const name = squeeze(
+      menuItem.getElementsByClassName('dish')[0]?.textContent?.trim() ?? '',
+      ' ',
+    );
+    const price = extractPrice(menuItem.getElementsByClassName('price')[0]?.textContent ?? '');
+    const info = squeeze(
+      menuItem.getElementsByClassName('info')[0]?.textContent?.trim() ?? '',
+      ' ',
+    );
 
-      return { name, price, info, menuId: menu.id };
-    })
-    .filter(isValidMenuItem);
+    return { name, price, info, menuId: menu.id };
+  });
 
   if (data.length >= 1) {
     await prisma.menuItem.createMany({ data });
@@ -400,8 +412,4 @@ function extractPrice(str: string): string | null {
     return matches[0];
   }
   return null;
-}
-
-function isValidMenuItem(menuItem: MenuItem) {
-  return !isNullish(menuItem.name) && !isNullish(menuItem.info);
 }
